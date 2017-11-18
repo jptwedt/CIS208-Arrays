@@ -1,0 +1,206 @@
+     1                                  
+     2                                  
+     3                                  ;
+     4                                  ; file: array1.asm
+     5                                  ; This program demonstrates arrays in assembly
+     6                                  ;
+     7                                  ; To create executable:
+     8                                  ; nasm -f coff array1.asm
+     9                                  ; gcc -o array1 array1.o array1c.c
+    10                                  ;
+    11                                  
+    12                                  %define MAX_ARRAY_SIZE 100
+    13                                  %define NEW_LINE 10
+    14                                  
+    15                                  segment .data
+    16 00000000 506C6561736520656E-     SizePrompt      db   "Please enter the array size (< 100): ",0
+    17 00000009 746572207468652061-
+    18 00000012 727261792073697A65-
+    19 0000001B 20283C20313030293A-
+    20 00000024 2000               
+    21 00000026 506C6561736520656E-     ScalarPrompt    db   "Please enter a scalar: ",0
+    22 0000002F 746572206120736361-
+    23 00000038 6C61723A2000       
+    24 0000003E 416C6C20256920656C-     resultMsg       db   "All %i elements after multiplication: ", NEW_LINE, 0
+    25 00000047 656D656E7473206166-
+    26 00000050 746572206D756C7469-
+    27 00000059 706C69636174696F6E-
+    28 00000062 3A200A00           
+    29 00000066 456E74657220736361-     Prompt          db   "Enter scalar to multiply array: ",0
+    30 0000006F 6C617220746F206D75-
+    31 00000078 6C7469706C79206172-
+    32 00000081 7261793A2000       
+    33 00000087 456C656D656E742025-     SecondMsg       db   "Element %d is %d", NEW_LINE, 0
+    34 00000090 642069732025640A00 
+    35 00000099 256900                  InputFormat     db   "%i", 0
+    36                                  
+    37                                  segment .bss
+    38 00000000 <res 000000C8>          array           resw MAX_ARRAY_SIZE
+    39 000000C8 <res 00000004>          arraySize       resd 1
+    40 000000CC <res 00000002>          scalar          resw 1
+    41                                  
+    42                                   
+    43                                  
+    44                                  segment .text
+    45                                      extern  puts, printf, scanf, dump_line
+    46                                      global  asm_main
+    47                                  asm_main:
+    48 00000000 C8040000                    enter   4,0                         ; local dword variable at EBP - 4
+    49 00000004 53                          push    ebx                         ; pushes ebx onto stack
+    50 00000005 56                          push    esi                         ; pushes source index onto stack
+    51                                      ; prompt user for array size
+    52                                      Prompt_Arrloop:
+    53 00000006 68[00000000]                    push    dword SizePrompt        ; push prompt onto stack
+    54 0000000B E8(00000000)                    call    printf                  ; call printf fxn
+    55 00000010 59                              pop     ecx                     ; pop prompt to ecx from stack
+    56 00000011 8D45FC                          lea     eax, [ebp-4]            ; eax = address of local dword
+    57 00000014 50                              push    eax                     ; push address onto stack
+    58 00000015 68[99000000]                    push    dword InputFormat       ; push InputFormat onto stack
+    59 0000001A E8(00000000)                    call    scanf                   ; call scanf
+    60                                                                          ;  input stored into local dword
+    61 0000001F 8B55FC                          mov     edx, [ebp-4]            ; store  scanned value into edx
+    62 00000022 8915[C8000000]                  mov     [arraySize],edx         ; store array size from dword
+    63 00000028 83C408                          add     esp, 8                  ; clear last two parameters from stack
+    64 0000002B 83F801                          cmp     eax, 1                  ; eax = return value of scanf
+    65                                                                          ;  scanf returns # of chars printed
+    66 0000002E 7407                            je      SizeOK
+    67 00000030 E8(00000000)                    call    dump_line               ; dump rest of line and start over
+    68 00000035 EBCF                            jmp     Prompt_Arrloop          ; if input invalid
+    69                                      ; if size is okay...
+    70                                      SizeOK:
+    71 00000037 8B0D[C8000000]                  mov     ecx, [arraySize]        ; stores max array size in ecx
+    72 0000003D BB[00000000]                    mov     ebx, array              ; stores address of array into ebx
+    73                                  ;        mov     edx, [ebp-4]            ; store address of local dword
+    74                                  ;        push    edx                     ; push that onto stack
+    75                                  ;        call    clock_random            ; generates a random 0-9 int 
+    76                                  ;        pop     edx                     ; pop result 
+    77                                  ;        mov     [initRand],dx           ; store that into initRand
+    78                                          init_loop:
+    79 00000042 B500                                mov     ch,0                ; zero out ch
+    80 00000044 880B                                mov     [ebx], cl           ; stores value of cl to array element
+    81 00000046 83C302                              add     ebx, 2              ; adds 2 bytes to ebx (address)
+    82 00000049 E2F7                                loop    init_loop           ; repeat until ecx = 0
+    83 0000004B 68[00000000]                    push    dword array             ; push array address onto stack
+    84 00000050 E88B000000                      call    print_array             ; call print_arry
+    85                                      ; prompt user for scalar
+    86                                      Prompt_Scaloop:
+    87 00000055 68[26000000]                    push    dword ScalarPrompt      ; push prompt onto stack
+    88 0000005A E8(00000000)                    call    printf                  ; call printf fxn
+    89 0000005F 83C404                          add     esp,4                   ; clear prompt from stack
+    90 00000062 8D45FC                          lea     eax, [ebp-4]            ; eax = address of local dword
+    91 00000065 50                              push    eax                     ; push address onto stack
+    92 00000066 68[99000000]                    push    dword InputFormat       ; push InputFormat onto stack
+    93 0000006B E8(00000000)                    call    scanf                   ; call scanf
+    94                                                                          ;  input stored into local dword
+    95 00000070 8B55FC                          mov     edx, [ebp-4]            ; move local dword into edx
+    96 00000073 8915[CC000000]                  mov     [scalar], edx           ; store local dword into scalar
+    97 00000079 83C408                          add     esp, 8                  ; clear last two parameters from stack
+    98 0000007C 83F801                          cmp     eax, 1                  ; eax = return value of scanf
+    99                                                                          ;  scanf returns # of chars printed
+   100 0000007F 7407                            je      ScalarOK                 ; jump if it printed 1 character
+   101 00000081 E8(00000000)                    call    dump_line               ; dump rest of line and start over
+   102 00000086 EBCD                            jmp     Prompt_Scaloop          ; if input invalid
+   103                                      ; if scalar is okay...
+   104                                      ScalarOK:
+   105 00000088 8B0D[C8000000]                  mov     ecx, [arraySize]        ; stores max array size in ecx
+   106 0000008E BB[00000000]                    mov     ebx, array              ; stores address of array into ebx
+   107 00000093 FC                              cld                             ; clear direction flag
+   108 00000094 BE[00000000]                    mov     esi,array               ; move the array address to esi
+   109 00000099 BF[00000000]                    mov     edi,array               ; make the destination array the same
+   110                                                                          ;  as the source array
+   111 0000009E 8A15[CC000000]                  mov     dl,[scalar]             ; copy the scalar to dl
+   112 000000A4 52                              push    edx                     ; push edx to stack, just in case
+   113                                          mul_loop:
+   114 000000A5 66AD                                lodsw                       ; load word into AX from array
+   115 000000A7 F6E2                                mul    dl                   ; multiply AX by DL, store in AX
+   116 000000A9 66AB                                stosw                       ; store AX 
+   117 000000AB E2F8                                loop    mul_loop            ; repeat until ecx = 0
+   118 000000AD 5A                              pop     edx                     ; return edx to pre-loop state
+   119 000000AE 83C408                          add     esp, 8                  ; clears "array + 20*4", "10" off stack
+   120 000000B1 FF35[C8000000]                  push    dword [arraySize]       ; pushes arraySize onto stack
+   121 000000B7 68[3E000000]                    push    dword resultMsg         ; pushes input format ont stack
+   122 000000BC E8(00000000)                    call    printf
+   123 000000C1 83C408                          add     esp,8                   ; clears arraySize from stack
+   124 000000C4 FF35[C8000000]                  push    dword [arraySize]       ; pushes "arraySize" onto stack
+   125 000000CA 68[00000000]                    push    dword array             ; pushes address of array onto stack
+   126 000000CF E80C000000                      call    print_array             ; calls print_array fxn
+   127 000000D4 83C408                          add     esp, 8                  ; clears 2 parameters off stack
+   128 000000D7 5E                          pop     esi                         ; pops stored esi to esi
+   129 000000D8 5B                          pop     ebx                         ; pops stored ebx to ebx
+   130 000000D9 B800000000                  mov     eax, 0                      ; return back to C
+   131 000000DE C9                          leave                     
+   132 000000DF C3                          ret
+   133                                  
+   134                                  
+   135                                  ; routine print_array
+   136                                  ; C-callable routine that prints out elements of a double word array as
+   137                                  ; signed integers.
+   138                                  ; C prototype:
+   139                                  ; void print_array( const int * a, int n);
+   140                                  ; Parameters:
+   141                                  ;   a - pointer to array to print out (at ebp+8 on stack)
+   142                                  ;   n - number of integers to print out (at ebp+12 on stack)
+   143                                  
+   144                                  segment .data
+   145 0000009C 252D3569202535690A-     OutputFormat    db   "%-5i %5i", NEW_LINE, 0
+   146 000000A5 00                 
+   147                                  
+   148                                  segment .text
+   149                                      global  print_array
+   150                                  print_array:
+   151 000000E0 C8000000                    enter   0,0
+   152 000000E4 56                          push    esi                         ; store esi value on stack
+   153 000000E5 53                          push    ebx                         ; store ebx value on stack (should be
+   154                                                                          ;  last entered array value)
+   155 000000E6 FC                          cld                                 ; make sure increment +1
+   156 000000E7 31F6                        xor     esi, esi                    ; esi = 0
+   157                                                                          ; by the C protocol, ebp = esp by this
+   158                                                                          ;  time, so both point to top of the
+   159                                                                          ;  stack
+   160 000000E9 8B0D[C8000000]              mov     ecx, [arraySize]            ; ecx = n
+   161 000000EF BB[00000000]                mov     ebx, array                  ; ebx = address of array
+   162                                                                          ; note: ebp+4 should have return addy
+   163                                      print_loop:
+   164 000000F4 51                              push    ecx                     ; printf might change ecx!
+   165 000000F5 8A0C73                          mov     cl, [ebx + 2*esi]       ; ecx = value in (array + 2*index)
+   166 000000F8 0FB6C9                          movzx   ecx,cl                  ; signed extension into ECX
+   167 000000FB 51                              push    ecx                     ; push ecx onto stack for printf
+   168 000000FC 56                              push    esi                     ; push esi onto stack for count
+   169 000000FD 68[9C000000]                    push    dword OutputFormat      ; push OutputFormat onto stack
+   170 00000102 E8(00000000)                    call    printf
+   171 00000107 83C40C                          add     esp, 12                 ; remove parameters (leave ecx!)
+   172                                                                          ;  (removes OutputFormat,esi, and
+   173                                                                          ;  array[esi])
+   174 0000010A 46                              inc     esi                     ; increment esi
+   175 0000010B 59                              pop     ecx                     ; pop stored ecx value back to ecx
+   176 0000010C E2E6                            loop    print_loop              ; loop if ecx > 0
+   177 0000010E 5B                          pop     ebx                         ; pop stored ebx value to ebx
+   178 0000010F 5E                          pop     esi                         ; pop stored esi value to esi
+   179 00000110 C9                          leave                               ; performs subprogram epilogue
+   180 00000111 C3                          ret                                 ; jump back to instruction after call
+   181                                  
+   182                                  ; routine clock_random
+   183                                  ; generates a number based off of the system clock
+   184                                  ; based off of code found here: https://stackoverflow.com/questions/17855817/generating-a-random-number-within-range-of-0-9-in-x86-8086-assembly
+   185                                  ;
+   186                                  
+   187                                  ;segment .data
+   188                                  ;
+   189                                  ;segment .text
+   190                                  ;    global clock_random
+   191                                  ;clock_random:
+   192                                  ;    enter   0,0
+   193                                  ;    lea     ebx,[ebp-4]             ; ebx = address of local dword
+   194                                  ;b1:
+   195                                  ;    mov     ah,00h                  ; interrupts to get system time
+   196                                  ;b2:
+   197                                  ;    int     1Ah                    ; cx:dx stores ticks since midnight
+   198                                  ;b3:
+   199                                  ;    mov     ax,dx                   ; stores the dx part into ax
+   200                                  ;    xor     dx,dx                   ; zero out dx
+   201                                  ;    mov     cx,10                   ; store operator into cx
+   202                                  ;    div     cx                      ; divide ax by cx, remainder in dx
+   203                                  ;    movsx   edx,dx                  ; extend dx into edx
+   204                                  ;    mov     ebx,edx                 ; put dx into local variable
+   205                                  ;    leave
+   206                                  ;    ret
